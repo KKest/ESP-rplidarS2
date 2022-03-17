@@ -1,0 +1,13 @@
+rpLidar	KEYWORD1
+getDeviceInfo	KEYWORD2
+getDeviceHealth	KEYWORD2
+resetDevice	KEYWORD2
+stopDevice	KEYWORD2
+start	KEYWORD2
+readMeasurePoints	KEYWORD2
+setAngleOfInterest	KEYWORD2
+DebugPrintMeasurePoints	KEYWORD2
+DebugPrintDeviceErrorStatus	KEYWORD2
+DebugPrintDeviceInfo	KEYWORD2
+DebugPrintDescriptor	KEYWORD2
+DebugPrintBufferAsHex	KEYWORD2
