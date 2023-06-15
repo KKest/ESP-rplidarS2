@@ -84,7 +84,7 @@ class rpLidar{
 	void DebugPrintBufferAsHex();				///< prints Standard Data as Hex splitted with ","  in Serial Monitor
 
 	
-	point_t Data[1540]; ///< stores the raw scan data
+	point_t Data[3250]; ///< stores the raw scan data
 	stScanDataPoint_t DataBuffer[1500];	///<Storage to save the Data of a Standard Scan
 	
 	private:
