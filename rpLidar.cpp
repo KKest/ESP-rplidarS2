@@ -185,28 +185,46 @@ uint16_t rpLidar::awaitExpressScan()
 	uint8_t cabinCount=0; //count of cabin which haves to be written
 	serial->flush();
 	uint8_t crc=0;
+	uint32_t internTimeCount=millis();
 	while(count<79)
 	{
-		if(serial->available()>=2)
+		if(serial->available()>=1)
 		{
 			uint8_t sync1=serial->read(); //Sync byte 1 of Packet
 			if(((sync1&0xF0)==0xA0))
 			{
+				while(serial->available()<=1)
+				{
+						if(millis()>internTimeCount+500)
+						{
+							return 0;
+						}
+					
+				}
+				internTimeCount=millis();
 				uint8_t sync2=serial->read(); //Sync byte 2 of Packet
 				if((sync2&0xF0)==0x50)
 				{
 					crc=(sync2<<4)|(sync1&0x0F);
 
-					while(serial->available()<2);
+					while(serial->available()<2)
+					{
+						if(millis()>internTimeCount+500)return 0;
+					}
 					serial->readBytes((uint8_t*)&Buffer,2);//read angle
 					ExpressDataBuffer[count].angle=(Buffer[1]<<8)|Buffer[0]; //connect angle low and high byte
 					while(cabinCount<40)
 					{
+						while(serial->available()<2)
+						{
+							if(millis()>internTimeCount+500)return 0;
+						}
 						if(serial->available()>=2)//cabin available?
 						{
 							serial->readBytes((uint8_t*)&Buffer,2);
 							ExpressDataBuffer[count].cabin[cabinCount]=Buffer[1]<<8|Buffer[0];
 							cabinCount++;
+							internTimeCount=millis();
 						}
 					}
 					cabinCount=0;
