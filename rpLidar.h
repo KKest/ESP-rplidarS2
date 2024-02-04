@@ -89,7 +89,7 @@ class rpLidar{
 	
 	private:
 	
-	stExpressDataPacket_t ExpressDataBuffer[79];	///<Storge to save the Data of an Express Scan
+	stExpressDataPacket_t ExpressDataBuffer[80];	///<Storge to save the Data of an Express Scan
 	uint16_t interestAngleLeft;		///< left border of needed angle 180-360°
 	uint16_t interestAngleRight;	///< right border of needed angle 0-180°
 
@@ -128,11 +128,11 @@ class rpLidar{
 	/**
 	 * Calculates the angle of each Cabin in an ExpressDataPacket
 	 *
-	 * @param pointer to the packet
-	 * @param current cabin
+	 * @param angle of the current and next cabin
+	 * @param current cabin index
 	 * @return calculated angle
 	 */	
-	double  calcAngle(stExpressDataPacket_t* _packets,uint16_t _k);
+	double  calcAngle(double angle1, double angle2, uint16_t _k);
 	
 	/**
 	 * Copy the data to new memory and calculate the true angle of each distance

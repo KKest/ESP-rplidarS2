@@ -13,6 +13,13 @@ rpLidar::rpLidar(HardwareSerial *_mySerial,uint32_t baud)
 {
 	serial=_mySerial;
 	serial->begin(baud);
+	// check if serial is available
+	while(!serial) {
+		serial->begin(baud);
+		Serial.println("Serial not available");
+		delay(100);
+	}
+	Serial.println("Serial OK");
 }
 
 
@@ -74,7 +81,7 @@ bool rpLidar::start(uint8_t _mode)
 {
 	resetDevice();
 	clearSerialBuffer();
-	switch(express)
+	switch(_mode)
 	{
 		case standard:
 			serial->write((uint8_t*)&req_message[rq_scan],2); //standard scan request
@@ -186,7 +193,7 @@ uint16_t rpLidar::awaitExpressScan()
 	serial->flush();
 	uint8_t crc=0;
 	uint32_t internTimeCount=millis();
-	while(count<79)
+	while(count<80)
 	{
 		if(serial->available()>=1)
 		{
@@ -237,7 +244,7 @@ uint16_t rpLidar::awaitExpressScan()
 			}
 		}
 	}
-	ExpressDataToPointArray((stExpressDataPacket_t*) ExpressDataBuffer, count-1);
+	ExpressDataToPointArray((stExpressDataPacket_t*) ExpressDataBuffer, count);
 	return count;
 }
 
@@ -262,7 +269,7 @@ bool rpLidar::isDataBetweenBorders(stScanDataPoint_t _point)
 
 bool rpLidar::isDataBetweenBorders(float _angle)
 {
-	if((_angle>interestAngleLeft)&&(_angle<interestAngleRight))
+	if((_angle>=interestAngleLeft)&&(_angle<=interestAngleRight))
 	{
 		return true;
 	}
@@ -494,26 +501,33 @@ bool rpLidar::checkForTimeout(uint32_t _time,size_t _size)
 bool rpLidar::ExpressDataToPointArray(stExpressDataPacket_t* _packets, uint16_t _count)
 {
 	uint16_t index=0;
+	memset(Data,0,sizeof(Data));
+
 	/// do a copy of expressData packet buffer and replace the angle of each cabin with the real angle
-	for(uint16_t i=0;i<_count-2;i++) //each expressData packet
+	for(uint16_t i=0;i<_count-1;i++) //each expressData packet
 	{
+		double actual_angle;
+		double  angle1=(_packets->angle&0x7FFF)/64.00;
+		_packets++;
+		double  angle2=(_packets->angle&0x7FFF)/64.00;
+		
 		for(uint16_t j=0;j<40;j++) //each cabin in expressData packet
 		{
-			double angle=calcAngle(_packets,j); //calculate the angle of current cabin
-			if(isDataBetweenBorders(angle)) //data correct interesting and in fov?
+			actual_angle = calcAngle(angle1, angle2, j); //calculate the angle of current cabin
+			
+			if(isDataBetweenBorders(actual_angle)) //data correct interesting and in fov?
 			{
-				Data[index].angle=angle;
+				Data[index].angle=actual_angle;
 				Data[index].distance=_packets->cabin[j];
 				index++;
 			}
-			else if(isDataBetweenBorders(angle))
+			else
 			{
 				Data[index].angle=0;
 				Data[index].distance=0;
 				index++;
 			}
 		}
-		_packets++;
 	}
 
 /// sorting start
@@ -544,12 +558,10 @@ bool rpLidar::ExpressDataToPointArray(stExpressDataPacket_t* _packets, uint16_t 
 	return true;
 }
 
-double  rpLidar::calcAngle(stExpressDataPacket_t* _packets,uint16_t _k)
+double  rpLidar::calcAngle(double angle1, double angle2,uint16_t _k)
 {
-	double  angle1=(_packets->angle&0x7FFF)/64.00;
-	_packets++;
-	double  angle2=(_packets->angle&0x7FFF)/64.00;
 	double  result;
+	
 	if(angle1<=angle2)
 	{
 		result=angle1+((angle2-angle1)/40)*_k;
